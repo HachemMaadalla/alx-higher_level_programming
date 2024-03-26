@@ -1,30 +1,25 @@
 #!/usr/bin/node
 
 const request = require('request');
+const id = process.argv[2];
+const url = `https://swapi-api.alx-tools.com/api/films/${id}`;
 
-request('https://swapi.co/api/films/' + process.argv[2], function (err, resp, body) {
-  if (err) {
-    console.log(err);
-  } else if (resp.statusCode === 200 && resp.headers['content-type'] === 'application/json') {
-    let chars = JSON.parse(body).characters;
-    let promiseArray = [];
-    for (let i = 0; i < chars.length; i++) {
-      promiseArray.push(new Promise((resolve, reject) =>
-        request(chars[i], function (error, response, body) {
-          if (error) {
-            console.log(error);
-          }
-          if (err) {
-            reject(err);
-          } else if (response.statusCode === 200) {
-            resolve(JSON.parse(body).name);
-          }
-        })));
+request.get(url, (error, response, body) => {
+  if (error) {
+    console.log(error);
+  } else {
+    const content = JSON.parse(body);
+    const characters = content.characters;
+    // console.log(characters);
+    for (const character of characters) {
+      request.get(character, (error, response, body) => {
+        if (error) {
+          console.log(error);
+        } else {
+          const names = JSON.parse(body);
+          console.log(names.name);
+        }
+      });
     }
-    Promise.all(promiseArray).then((results) => {
-      for (let i = 0; i < results.length; i++) {
-        console.log(results[i]);
-      }
-    }).catch(err => console.log(err));
   }
 });
